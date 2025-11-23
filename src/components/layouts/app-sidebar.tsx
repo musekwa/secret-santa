@@ -1,0 +1,37 @@
+import { useLayout } from '@/context/layout-provider'
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarRail,
+} from '@/components/ui/sidebar'
+// import { AppTitle } from './app-title'
+import { sidebarData } from '@/components/layouts/data/sidebar-data'
+import { NavGroup } from '@/components/layouts/nav-group'
+import { NavUser } from '@/components/layouts/nav-user'
+import { TeamSwitcher } from '@/components/layouts/team-switcher'
+
+export const AppSidebar = () => {
+  const { collapsible, variant } = useLayout()
+  return (
+    <Sidebar collapsible={collapsible} variant={variant}>
+      <SidebarHeader>
+        <TeamSwitcher teams={sidebarData.teams} />
+
+        {/* Replace <TeamSwitch /> with the following <AppTitle />
+         /* if you want to use the normal app title instead of TeamSwitch dropdown */}
+        {/* <AppTitle /> */}
+      </SidebarHeader>
+      <SidebarContent>
+        {sidebarData.navGroups.map((props) => (
+          <NavGroup key={props.title} {...props} />
+        ))}
+      </SidebarContent>
+      <SidebarFooter>
+        <NavUser user={sidebarData.user} />
+      </SidebarFooter>
+      <SidebarRail />
+    </Sidebar>
+  );
+}
