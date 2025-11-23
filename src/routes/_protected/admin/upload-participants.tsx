@@ -279,11 +279,50 @@ function UploadParticipantsComponent() {
     setIsUploading(true);
 
     try {
-      // Generate unique codes for all participants
+      // Check which emails already exist in the database
+      const emails = participants.map((p) => p.email.toLowerCase().trim());
+      const { data: existingParticipants, error: checkError } = await supabase
+        .from("participants")
+        .select("email")
+        .in("email", emails);
+
+      if (checkError) {
+        console.error("Error checking existing participants:", checkError);
+        // Continue anyway, will handle duplicates during insert
+      }
+
+      const existingEmails = new Set(
+        (existingParticipants || []).map((p) => p.email.toLowerCase().trim())
+      );
+
+      // Filter out participants that already exist
+      const newParticipants = participants.filter(
+        (p) => !existingEmails.has(p.email.toLowerCase().trim())
+      );
+
+      const skippedEmails = participants.filter((p) =>
+        existingEmails.has(p.email.toLowerCase().trim())
+      );
+
+      if (newParticipants.length === 0) {
+        toast.error(
+          `Todos os ${participants.length} participantes já existem no banco de dados.`
+        );
+        setIsUploading(false);
+        return;
+      }
+
+      if (skippedEmails.length > 0) {
+        toast.warning(
+          `${skippedEmails.length} participante(s) já existem e serão ignorados: ${skippedEmails.map((p) => p.email).join(", ")}`
+        );
+      }
+
+      // Generate unique codes for new participants only
       // Use a Set to track codes in the current batch to avoid duplicates
       const existingCodes = new Set<string>();
       const participantsWithCodes = await Promise.all(
-        participants.map(async (participant) => {
+        newParticipants.map(async (participant) => {
           const code = await generateUniqueCode(existingCodes);
           return {
             name: participant.name,
@@ -291,19 +330,20 @@ function UploadParticipantsComponent() {
             amount: "1000",
             code: code,
             is_verified: false,
+            is_admin: false,
           };
         })
       );
 
-      // Insert participants into database
+      // Insert only new participants into database
       const { data: insertedParticipants, error } = await supabase
         .from("participants")
         .insert(participantsWithCodes)
         .select();
 
-      if (error) {
-        // Handle duplicate email error
-        if (error.code === "23505") {
+      if (error || !insertedParticipants || insertedParticipants.length === 0) {
+        // Handle duplicate email error (shouldn't happen now, but just in case)
+        if (error?.code === "23505") {
           // Unique constraint violation
           if (error.message.includes("email")) {
             toast.error(
@@ -314,12 +354,17 @@ function UploadParticipantsComponent() {
               "Erro ao gerar códigos únicos. Por favor, tente novamente."
             );
           } else {
-            toast.error(`Erro ao salvar participantes: ${error.message}`);
+            toast.error(
+              `Erro ao salvar participantes: ${error?.message || "Erro desconhecido"}`
+            );
           }
         } else {
-          toast.error(`Erro ao salvar participantes: ${error.message}`);
+          toast.error(
+            `Erro ao salvar participantes: ${error?.message || "Nenhum participante foi inserido"}`
+          );
         }
         console.error("Error uploading participants:", error);
+        setIsUploading(false);
         return;
       }
 
@@ -350,6 +395,7 @@ function UploadParticipantsComponent() {
         toast.error(
           "Participantes salvos, mas houve erro ao criar códigos de verificação. Por favor, tente novamente."
         );
+        setIsUploading(false);
         return;
       }
 

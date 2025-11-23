@@ -13,10 +13,12 @@ import { Route as ProtectedRouteRouteImport } from './routes/_protected/route'
 import { Route as AuthRouteRouteImport } from './routes/_auth/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProtectedDashboardRouteImport } from './routes/_protected/dashboard'
+import { Route as AuthRequestOtpRouteImport } from './routes/_auth/request-otp'
 import { Route as AuthLoginRouteImport } from './routes/_auth/login'
 import { Route as AuthEnterAmountRouteImport } from './routes/_auth/enter-amount'
 import { Route as ProtectedAdminRouteRouteImport } from './routes/_protected/admin/route'
 import { Route as ProtectedAdminUploadParticipantsRouteImport } from './routes/_protected/admin/upload-participants'
+import { Route as ProtectedAdminParticipantsRouteImport } from './routes/_protected/admin/participants'
 
 const ProtectedRouteRoute = ProtectedRouteRouteImport.update({
   id: '/_protected',
@@ -35,6 +37,11 @@ const ProtectedDashboardRoute = ProtectedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
   getParentRoute: () => ProtectedRouteRoute,
+} as any)
+const AuthRequestOtpRoute = AuthRequestOtpRouteImport.update({
+  id: '/request-otp',
+  path: '/request-otp',
+  getParentRoute: () => AuthRouteRoute,
 } as any)
 const AuthLoginRoute = AuthLoginRouteImport.update({
   id: '/login',
@@ -57,13 +64,21 @@ const ProtectedAdminUploadParticipantsRoute =
     path: '/upload-participants',
     getParentRoute: () => ProtectedAdminRouteRoute,
   } as any)
+const ProtectedAdminParticipantsRoute =
+  ProtectedAdminParticipantsRouteImport.update({
+    id: '/participants',
+    path: '/participants',
+    getParentRoute: () => ProtectedAdminRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof ProtectedAdminRouteRouteWithChildren
   '/enter-amount': typeof AuthEnterAmountRoute
   '/login': typeof AuthLoginRoute
+  '/request-otp': typeof AuthRequestOtpRoute
   '/dashboard': typeof ProtectedDashboardRoute
+  '/admin/participants': typeof ProtectedAdminParticipantsRoute
   '/admin/upload-participants': typeof ProtectedAdminUploadParticipantsRoute
 }
 export interface FileRoutesByTo {
@@ -71,7 +86,9 @@ export interface FileRoutesByTo {
   '/admin': typeof ProtectedAdminRouteRouteWithChildren
   '/enter-amount': typeof AuthEnterAmountRoute
   '/login': typeof AuthLoginRoute
+  '/request-otp': typeof AuthRequestOtpRoute
   '/dashboard': typeof ProtectedDashboardRoute
+  '/admin/participants': typeof ProtectedAdminParticipantsRoute
   '/admin/upload-participants': typeof ProtectedAdminUploadParticipantsRoute
 }
 export interface FileRoutesById {
@@ -82,7 +99,9 @@ export interface FileRoutesById {
   '/_protected/admin': typeof ProtectedAdminRouteRouteWithChildren
   '/_auth/enter-amount': typeof AuthEnterAmountRoute
   '/_auth/login': typeof AuthLoginRoute
+  '/_auth/request-otp': typeof AuthRequestOtpRoute
   '/_protected/dashboard': typeof ProtectedDashboardRoute
+  '/_protected/admin/participants': typeof ProtectedAdminParticipantsRoute
   '/_protected/admin/upload-participants': typeof ProtectedAdminUploadParticipantsRoute
 }
 export interface FileRouteTypes {
@@ -92,7 +111,9 @@ export interface FileRouteTypes {
     | '/admin'
     | '/enter-amount'
     | '/login'
+    | '/request-otp'
     | '/dashboard'
+    | '/admin/participants'
     | '/admin/upload-participants'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -100,7 +121,9 @@ export interface FileRouteTypes {
     | '/admin'
     | '/enter-amount'
     | '/login'
+    | '/request-otp'
     | '/dashboard'
+    | '/admin/participants'
     | '/admin/upload-participants'
   id:
     | '__root__'
@@ -110,7 +133,9 @@ export interface FileRouteTypes {
     | '/_protected/admin'
     | '/_auth/enter-amount'
     | '/_auth/login'
+    | '/_auth/request-otp'
     | '/_protected/dashboard'
+    | '/_protected/admin/participants'
     | '/_protected/admin/upload-participants'
   fileRoutesById: FileRoutesById
 }
@@ -150,6 +175,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedDashboardRouteImport
       parentRoute: typeof ProtectedRouteRoute
     }
+    '/_auth/request-otp': {
+      id: '/_auth/request-otp'
+      path: '/request-otp'
+      fullPath: '/request-otp'
+      preLoaderRoute: typeof AuthRequestOtpRouteImport
+      parentRoute: typeof AuthRouteRoute
+    }
     '/_auth/login': {
       id: '/_auth/login'
       path: '/login'
@@ -178,17 +210,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedAdminUploadParticipantsRouteImport
       parentRoute: typeof ProtectedAdminRouteRoute
     }
+    '/_protected/admin/participants': {
+      id: '/_protected/admin/participants'
+      path: '/participants'
+      fullPath: '/admin/participants'
+      preLoaderRoute: typeof ProtectedAdminParticipantsRouteImport
+      parentRoute: typeof ProtectedAdminRouteRoute
+    }
   }
 }
 
 interface AuthRouteRouteChildren {
   AuthEnterAmountRoute: typeof AuthEnterAmountRoute
   AuthLoginRoute: typeof AuthLoginRoute
+  AuthRequestOtpRoute: typeof AuthRequestOtpRoute
 }
 
 const AuthRouteRouteChildren: AuthRouteRouteChildren = {
   AuthEnterAmountRoute: AuthEnterAmountRoute,
   AuthLoginRoute: AuthLoginRoute,
+  AuthRequestOtpRoute: AuthRequestOtpRoute,
 }
 
 const AuthRouteRouteWithChildren = AuthRouteRoute._addFileChildren(
@@ -196,10 +237,12 @@ const AuthRouteRouteWithChildren = AuthRouteRoute._addFileChildren(
 )
 
 interface ProtectedAdminRouteRouteChildren {
+  ProtectedAdminParticipantsRoute: typeof ProtectedAdminParticipantsRoute
   ProtectedAdminUploadParticipantsRoute: typeof ProtectedAdminUploadParticipantsRoute
 }
 
 const ProtectedAdminRouteRouteChildren: ProtectedAdminRouteRouteChildren = {
+  ProtectedAdminParticipantsRoute: ProtectedAdminParticipantsRoute,
   ProtectedAdminUploadParticipantsRoute: ProtectedAdminUploadParticipantsRoute,
 }
 

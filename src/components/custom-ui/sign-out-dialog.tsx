@@ -1,38 +1,39 @@
-import { useNavigate, useLocation } from '@tanstack/react-router'
-import { useAuthStore } from '@/stores/auth-store'
-import { ConfirmDialog } from '@/components/custom-ui/confirm-dialog'
+import { useNavigate, useLocation } from "@tanstack/react-router";
+import { clearUserFromStorage } from "@/hooks/use-user";
+import { ConfirmDialog } from "@/components/custom-ui/confirm-dialog";
 
 interface SignOutDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
 export const SignOutDialog = ({ open, onOpenChange }: SignOutDialogProps) => {
-  const navigate = useNavigate()
-  const location = useLocation()
-  const { auth } = useAuthStore()
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const handleSignOut = () => {
-    auth.reset()
+    // Clear user info from localStorage
+    clearUserFromStorage();
+
     // Preserve current location for redirect after sign-in
-    const currentPath = location.href
+    const currentPath = location.href;
     navigate({
-      to: '/login',
+      to: "/login",
       search: { redirect: currentPath },
       replace: true,
-    })
-  }
+    });
+  };
 
   return (
     <ConfirmDialog
       open={open}
       onOpenChange={onOpenChange}
-      title='Sign out'
-      desc='Are you sure you want to sign out? You will need to sign in again to access your account.'
-      confirmText='Sign out'
+      title="Sair"
+      desc="Tem certeza de que deseja sair? Você precisará fazer login novamente para acessar sua conta."
+      confirmText="Sair"
       destructive
       handleConfirm={handleSignOut}
-      className='sm:max-w-sm'
+      className="sm:max-w-sm"
     />
-  )
-}
+  );
+};

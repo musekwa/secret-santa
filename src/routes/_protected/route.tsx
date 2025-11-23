@@ -1,18 +1,22 @@
-import { createFileRoute,  redirect } from '@tanstack/react-router'
-import { AuthenticatedLayout } from '@/components/layouts/authenticated-layout'
+import { createFileRoute, redirect } from "@tanstack/react-router";
+import { AuthenticatedLayout } from "@/components/layouts/authenticated-layout";
+import { Spinner } from "@/components/ui/spinner";
+import { AlertCircleIcon } from "lucide-react";
 
-export const Route = createFileRoute('/_protected')({
-  beforeLoad: async ({context}) => {
-    if (!context.user){
-      // throw redirect({
-      //   to: '/login',
-      //   search: {
-      //     redirect: location.href,
-      //   },
-      // });
+export const Route = createFileRoute("/_protected")({
+  beforeLoad: async () => {
+    // Check if user ID exists in localStorage
+    const userId = localStorage.getItem("secret_santa_participant");
+    if (!userId) {
+      throw redirect({
+        to: "/login",
+        search: {
+          redirect: location.href,
+        },
+      });
     }
   },
-  pendingComponent: () => <div>Loading...</div>,
-  errorComponent: () => <div>Error</div>,
+  pendingComponent: Spinner,
+  errorComponent: AlertCircleIcon,
   component: () => <AuthenticatedLayout />,
-})
+});

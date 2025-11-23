@@ -6,7 +6,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, redirect } from "@tanstack/react-router";
 import { z } from "zod";
 import { useForm } from "@tanstack/react-form";
 import {
@@ -18,7 +18,6 @@ import iamLogo from "@/assets/images/iam-logo.png";
 import { toast } from "sonner";
 import { useRef, useEffect } from "react";
 import { supabase } from "@/lib/supabase/client";
-import { setUserInStorage } from "@/hooks/use-user";
 
 // Zod schema for gift amount validation
 const amountSchema = z.object({
@@ -30,7 +29,7 @@ const amountSchema = z.object({
         const num = parseFloat(val.replace(/\./g, "").replace(",", "."));
         return !isNaN(num) && num >= 1000;
       },
-      { message: "O valor mínimo é 1.000,00 MZN" }
+      { message: "O valor mínimo é 1.000 MZN" }
     ),
 });
 
@@ -42,6 +41,18 @@ export const Route = createFileRoute("/_auth/enter-amount")({
   validateSearch: z.object({
     redirect: z.string().optional(),
   }),
+  beforeLoad: async () => {
+    // Check if user ID exists in localStorage
+    const userId = localStorage.getItem("secret_santa_participant");
+    if (!userId) {
+      throw redirect({
+        to: "/login",
+        search: {
+          redirect: location.href,
+        },
+      });
+    }
+  },
 });
 
 function EnterAmountRouteComponent() {
@@ -49,40 +60,22 @@ function EnterAmountRouteComponent() {
   const { redirect } = Route.useSearch();
   const giftAmountInputRef = useRef<HTMLInputElement>(null);
 
-  // Helper function to format number with thousands separators
-  // Shows 2 decimal places only when comma is present or when forceDecimals is true
-  const formatAmount = (
-    value: string,
-    forceDecimals: boolean = false
-  ): string => {
+  // Helper function to format number with thousands separators (no decimals)
+  const formatAmount = (value: string): string => {
     if (!value || value.trim() === "") return "";
 
-    // Remove all non-digit characters except comma
-    const cleaned = value.replace(/[^\d,]/g, "");
+    // Remove all non-digit characters
+    const cleaned = value.replace(/\D/g, "");
 
-    // Split by comma to separate integer and decimal parts
-    const parts = cleaned.split(",");
-    const integerPart = parts[0] || "";
-    let decimalPart = parts[1] || "";
-
-    // Add thousands separators (dots) to integer part
-    const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-
-    // Show 2 decimal places if comma exists or if forceDecimals is true
-    if (forceDecimals || value.includes(",") || decimalPart) {
-      const paddedDecimal = decimalPart.slice(0, 2).padEnd(2, "0");
-      return `${formattedInteger},${paddedDecimal}`;
-    }
-
-    // If no comma, show without decimals (user is still typing)
-    return formattedInteger;
+    // Add thousands separators (dots)
+    return cleaned.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
   };
 
   // Helper function to parse formatted amount back to number
   const parseAmount = (value: string): number => {
-    // Remove all dots (thousands separators) and replace comma with dot for decimal
-    const cleaned = value.replace(/\./g, "").replace(",", ".");
-    return parseFloat(cleaned);
+    // Remove all non-digit characters (thousands separators)
+    const cleaned = value.replace(/\D/g, "");
+    return parseInt(cleaned, 10) || 0;
   };
 
   // Helper function to validate gift amount
@@ -109,7 +102,7 @@ function EnterAmountRouteComponent() {
   // TanStack Form setup with Zod validation
   const form = useForm({
     defaultValues: {
-      giftAmount: "1000,00",
+      giftAmount: "1000",
     } as AmountFormData,
     validators: {
       onChange: ({ value }) => {
@@ -120,23 +113,21 @@ function EnterAmountRouteComponent() {
     onSubmit: async ({ value }) => {
       try {
         const amount = parseAmount(value.giftAmount);
-        const amountString = amount.toFixed(2); // Convert to string with 2 decimal places
+        const amountString = amount.toString(); // Store as whole number
 
-        // Get current user from localStorage
-        const stored = localStorage.getItem("secret_santa_participant");
-        if (!stored) {
+        // Get current user ID from localStorage
+        const userId = localStorage.getItem("secret_santa_participant");
+        if (!userId) {
           toast.error("Sessão expirada. Por favor, faça login novamente.");
           navigate({ to: "/login", replace: true });
           return;
         }
 
-        const currentUser = JSON.parse(stored);
-
         // Update participant amount in database
         const { error } = await supabase
           .from("participants")
           .update({ amount: amountString })
-          .eq("id", currentUser.id);
+          .eq("id", userId);
 
         if (error) {
           console.error("Error updating amount:", error);
@@ -144,11 +135,7 @@ function EnterAmountRouteComponent() {
           return;
         }
 
-        // Update user in localStorage with new amount
-        setUserInStorage({
-          ...currentUser,
-          amount: amount,
-        });
+        // User data will be automatically refreshed from database on next useUser call
 
         toast.success("Valor do presente salvo com sucesso!");
         navigate({ to: redirect || "/dashboard", replace: true });
@@ -200,7 +187,7 @@ function EnterAmountRouteComponent() {
                   }
                   const num = parseAmount(value);
                   if (isNaN(num) || num < 1000) {
-                    return "O valor mínimo é 1.000,00 MZN";
+                    return "O valor mínimo é 1.000 MZN";
                   }
                   return undefined;
                 },
@@ -222,43 +209,15 @@ function EnterAmountRouteComponent() {
                       ref={giftAmountInputRef}
                       id="giftAmount"
                       type="text"
-                      placeholder="1.000,00"
-                      value={formatAmount(field.state.value, false)}
+                      placeholder="1.000"
+                      value={formatAmount(field.state.value)}
                       onChange={(e) => {
-                        // Get the raw input value from the event
-                        const inputValue = e.target.value;
-
-                        // Remove all formatting characters (dots for thousands separators)
-                        // but preserve digits and comma for decimal separator
-                        let rawValue = inputValue.replace(/\./g, ""); // Remove thousands separators
-                        rawValue = rawValue.replace(/[^\d,]/g, ""); // Keep only digits and comma
-
-                        // Prevent multiple commas
-                        const commaIndex = rawValue.indexOf(",");
-                        if (commaIndex !== -1) {
-                          rawValue =
-                            rawValue.slice(0, commaIndex + 1) +
-                            rawValue.slice(commaIndex + 1).replace(/,/g, "");
-                        }
-
-                        // Store raw value in form state (e.g., "1000" or "1000,5")
-                        field.handleChange(rawValue);
+                        // Remove all non-digit characters
+                        const cleaned = e.target.value.replace(/\D/g, "");
+                        // Store raw value in form state (e.g., "1000")
+                        field.handleChange(cleaned);
                       }}
-                      onBlur={() => {
-                        // On blur, ensure 2 decimal places are shown
-                        const currentValue = field.state.value;
-                        if (currentValue && currentValue.trim() !== "") {
-                          // Ensure value has 2 decimal places
-                          const parts = currentValue.split(",");
-                          const integerPart = parts[0] || "";
-                          const decimalPart = (parts[1] || "")
-                            .padEnd(2, "0")
-                            .slice(0, 2);
-                          // Update with formatted value that includes ,00
-                          field.handleChange(`${integerPart},${decimalPart}`);
-                        }
-                        field.handleBlur();
-                      }}
+                      onBlur={field.handleBlur}
                       className={`pl-12 h-12 text-base border-slate-200 dark:border-slate-600 focus:border-primary focus:ring-primary/20 ${
                         field.state.meta.errors.length > 0
                           ? "border-red-500 focus:border-red-500"
@@ -281,7 +240,7 @@ function EnterAmountRouteComponent() {
                       }
                     />
                   ) : (
-                    <FieldDescription description="O valor do presente deve ser pelo menos 1.000,00 MZN" />
+                    <FieldDescription description="O valor do presente deve ser pelo menos 1.000 MZN" />
                   )}
                 </div>
               )}

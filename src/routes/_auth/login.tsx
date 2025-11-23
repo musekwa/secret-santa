@@ -11,7 +11,12 @@ import {
   InputOTPSlot,
   InputOTPSeparator,
 } from "@/components/ui/input-otp";
-import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  redirect,
+  useNavigate,
+  Link,
+} from "@tanstack/react-router";
 import { z } from "zod";
 import { useForm } from "@tanstack/react-form";
 import {
@@ -29,7 +34,7 @@ import { setUserInStorage } from "@/hooks/use-user";
 // Zod schema for login validation
 const loginSchema = z.object({
   otp: z.string().length(6, "O código deve ter 6 dígitos"),
-  email: z.string().email("O email é inválido"),
+  email: z.email("O email é inválido"),
 });
 
 // TypeScript type inferred from the Zod schema for type safety
@@ -120,7 +125,7 @@ function LoginRouteComponent() {
         // Fetch participant from participants table and verify email matches
         const { data: participant, error: participantError } = await supabase
           .from("participants")
-          .select("*")
+          .select("*, is_admin")
           .eq("id", verification.participant_id)
           .eq("email", email)
           .single();
@@ -140,38 +145,54 @@ function LoginRouteComponent() {
 
         if (updateError) {
           console.error("Error updating participant:", updateError);
-          toast.error("Erro ao atualizar participante. Por favor, tente novamente.");
+          toast.error(
+            "Erro ao atualizar participante. Por favor, tente novamente."
+          );
           return;
         }
 
-        // Delete the verification record
-        const { error: deleteError } = await supabase
-          .from("verifications")
-          .delete()
-          .eq("id", verification.id);
+        // Delete the verification record ONLY if user is not admin
+        // Admin OTP should persist and be reusable
+        if (!participant.is_admin) {
+          const { error: deleteError } = await supabase
+            .from("verifications")
+            .delete()
+            .eq("id", verification.id);
 
-        if (deleteError) {
-          console.error("Error deleting verification:", deleteError);
-          // Don't fail the login if deletion fails, just log it
+          if (deleteError) {
+            console.error("Error deleting verification:", deleteError);
+            // Don't fail the login if deletion fails, just log it
+          }
         }
 
-        // Store participant in localStorage (with updated is_verified status)
-        setUserInStorage({
-          id: participant.id,
-          name: participant.name,
-          email: participant.email,
-          is_verified: true,
-          amount: parseFloat(participant.amount) || 0,
-          code: participant.code || "",
-        });
+        // Store only participant ID in localStorage
+        setUserInStorage(participant.id);
 
         toast.success("Login realizado com sucesso!");
 
-        // Redirect to dashboard
-        navigate({
-          to: redirect || "/dashboard",
-          replace: true,
-        });
+        // Check if user needs to enter amount (if amount is still default "1000")
+        // Parse amount to check if it's the default
+        const amountNum = parseFloat(
+          participant.amount.replace(/\./g, "").replace(",", ".")
+        );
+        const isDefaultAmount = !isNaN(amountNum) && amountNum === 1000;
+
+        // Redirect to enter-amount if user hasn't set a custom amount yet
+        // Otherwise redirect to dashboard
+        if (isDefaultAmount && !participant.is_admin) {
+          navigate({
+            to: "/enter-amount",
+            search: {
+              redirect: redirect || "/dashboard",
+            },
+            replace: true,
+          });
+        } else {
+          navigate({
+            to: redirect || "/dashboard",
+            replace: true,
+          });
+        }
       } catch (error) {
         console.error("Login error:", error);
         toast.error("Erro ao fazer login. Por favor, tente novamente.");
@@ -310,6 +331,15 @@ function LoginRouteComponent() {
               submittingText="Entrando..."
               text="Entrar"
             />
+
+            <div className="text-center pt-2">
+              <Link
+                to="/request-otp"
+                className="text-sm text-primary hover:underline"
+              >
+                Não recebeu o código? Solicite um novo
+              </Link>
+            </div>
           </form>
         </CardContent>
       </Card>
