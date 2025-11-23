@@ -22,15 +22,11 @@ import iamLogo from "@/assets/images/iam-logo.png";
 import { toast } from "sonner";
 import { useState } from "react";
 import { supabase } from "@/lib/supabase/client";
-import { resend } from "@/lib/resend";
-import {
-  RESEND_SUPABASE_URL,
-  RESEND_SUPABASE_ANON_KEY,
-} from "@/config/secrets";
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from "@/config/secrets";
 
 // Zod schema for email validation
 const requestOTPSchema = z.object({
-  email: z.string().email("O email é inválido"),
+  email: z.email("O email é inválido"),
 });
 
 // TypeScript type inferred from the Zod schema
@@ -119,7 +115,7 @@ function RequestOTPRouteComponent() {
           // Still navigate to login to prevent timing attacks
           setTimeout(() => {
             navigate({ to: "/login", replace: true });
-          }, 2000);
+          }, 1000);
           return;
         }
 
@@ -152,56 +148,37 @@ function RequestOTPRouteComponent() {
           return;
         }
 
-        // Send email with new OTP
+        // Send email with new OTP using Supabase Edge Function
         const loginUrl = `${window.location.origin}/login`;
 
         try {
-          // Call Resend Edge Function via Supabase to send email
-          const { error: emailError } = await resend.functions.invoke(
-            "send-otp-email",
+          // Call Supabase Edge Function to send email
+          const response = await fetch(
+            `${SUPABASE_URL}/functions/v1/send-otp-email`,
             {
-              body: {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+              },
+              body: JSON.stringify({
                 to: participant.email,
                 subject: "Seu novo código de acesso - Amigos Ocultos IAM, IP",
                 participantName: participant.name,
                 otp: otp,
                 loginUrl: loginUrl,
-              },
+              }),
             }
           );
 
-          if (emailError) {
-            console.error("Error sending email:", emailError);
-            // Fallback: try direct fetch
-            try {
-              const response = await fetch(
-                `${RESEND_SUPABASE_URL}/functions/v1/send-otp-email`,
-                {
-                  method: "POST",
-                  headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${RESEND_SUPABASE_ANON_KEY}`,
-                  },
-                  body: JSON.stringify({
-                    to: participant.email,
-                    subject:
-                      "Seu novo código de acesso - Amigos Ocultos IAM, IP",
-                    participantName: participant.name,
-                    otp: otp,
-                    loginUrl: loginUrl,
-                  }),
-                }
-              );
+          const data = await response.json();
 
-              if (!response.ok) {
-                throw new Error("Failed to send email");
-              }
-            } catch (fetchError) {
-              console.error("Error with fallback email send:", fetchError);
-              toast.error(
-                "Código criado, mas houve erro ao enviar email. Entre em contato com o administrador."
-              );
-            }
+          if (!response.ok || data.error) {
+            console.error("Error sending email:", data.error || data);
+            toast.error(
+              "Código criado, mas houve erro ao enviar email. Entre em contato com o administrador."
+            );
+            return;
           }
         } catch (error) {
           console.error("Error sending email:", error);

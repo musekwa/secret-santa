@@ -1,4 +1,4 @@
-import { RESEND_SUPABASE_ANON_KEY, RESEND_SUPABASE_URL } from "@/config/secrets";
-import { createClient } from "@supabase/supabase-js";
+import { Resend } from "resend";
+import { RESEND_API_KEY } from "@/config/secrets";
 
-export const resend = createClient(RESEND_SUPABASE_URL, RESEND_SUPABASE_ANON_KEY);
+export const resend = new Resend(RESEND_API_KEY);

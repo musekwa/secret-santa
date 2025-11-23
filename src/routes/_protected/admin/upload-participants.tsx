@@ -18,11 +18,7 @@ import {
 import { toast } from "sonner";
 import ExcelJS from "exceljs";
 import { supabase } from "@/lib/supabase/client";
-import { resend } from "@/lib/resend";
-import {
-  RESEND_SUPABASE_URL,
-  RESEND_SUPABASE_ANON_KEY,
-} from "@/config/secrets";
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from "@/config/secrets";
 
 // Type for participant data
 type Participant = {
@@ -399,7 +395,7 @@ function UploadParticipantsComponent() {
         return;
       }
 
-      // Send emails to participants with their OTP codes using Resend-Supabase integration
+      // Send emails to participants with their OTP codes using Supabase Edge Function
       // Note: This runs asynchronously and won't block the upload process
       const loginUrl = `${window.location.origin}/login`;
 
@@ -409,23 +405,33 @@ function UploadParticipantsComponent() {
           const participant = insertedParticipants[index];
 
           try {
-            // Call Resend Edge Function via Supabase to send email
-            const { error } = await resend.functions.invoke("send-otp-email", {
-              body: {
-                to: participant.email,
-                subject: "Seu código de acesso - Amigos Ocultos IAM, IP",
-                participantName: participant.name,
-                otp: verification.otp,
-                loginUrl: loginUrl,
-              },
-            });
+            // Call Supabase Edge Function to send email
+            const response = await fetch(
+              `${SUPABASE_URL}/functions/v1/send-otp-email`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+                },
+                body: JSON.stringify({
+                  to: participant.email,
+                  subject: "Seu código de acesso - Amigos Ocultos IAM, IP",
+                  participantName: participant.name,
+                  otp: verification.otp,
+                  loginUrl: loginUrl,
+                }),
+              }
+            );
 
-            if (error) {
+            const data = await response.json();
+
+            if (!response.ok || data.error) {
               console.error(
                 `Error sending email to ${participant.email}:`,
-                error
+                data.error || data
               );
-              throw error;
+              throw new Error(data.error?.message || "Failed to send email");
             }
 
             return { email: participant.email, success: true };
@@ -435,44 +441,6 @@ function UploadParticipantsComponent() {
               `Failed to send email to ${participant.email}:`,
               error
             );
-
-            // If it's a CORS error, try using fetch directly as fallback
-            if (
-              error?.message?.includes("CORS") ||
-              error?.name === "TypeError"
-            ) {
-              try {
-                const response = await fetch(
-                  `${RESEND_SUPABASE_URL}/functions/v1/send-otp-email`,
-                  {
-                    method: "POST",
-                    headers: {
-                      "Content-Type": "application/json",
-                      Authorization: `Bearer ${RESEND_SUPABASE_ANON_KEY}`,
-                    },
-                    body: JSON.stringify({
-                      to: participant.email,
-                      subject: "Seu código de acesso - Amigos Ocultos IAM, IP",
-                      participantName: participant.name,
-                      otp: verification.otp,
-                      loginUrl: loginUrl,
-                    }),
-                  }
-                );
-
-                if (!response.ok) {
-                  throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
-                return { email: participant.email, success: true };
-              } catch (fetchError) {
-                console.error(
-                  `Fallback email send also failed for ${participant.email}:`,
-                  fetchError
-                );
-                throw fetchError;
-              }
-            }
             throw error;
           }
         })

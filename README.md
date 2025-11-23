@@ -281,13 +281,67 @@ src/
 
 ### Supabase Setup
 
-1. Create a Supabase project
-2. Run `src/models/index.sql` to create tables
-3. Set up Edge Function for email sending:
-   - Deploy `supabase/functions/send-otp-email/`
-   - Set environment variables:
-     - `RESEND_API_KEY`
-     - `RESEND_FROM_EMAIL`
+1. **Create a Supabase project**
+   - Go to [supabase.com](https://supabase.com)
+   - Create a new project
+   - Note your project URL and anon key
+
+2. **Set up database schema**
+   - Go to SQL Editor in Supabase dashboard
+   - Run `src/models/index.sql` to create tables
+
+3. **Deploy Edge Function for email sending**
+
+   **Option A: Using Supabase Dashboard (Recommended)**
+   1. Go to Edge Functions in Supabase dashboard
+   2. Click "Create a new function"
+   3. Name it `send-otp-email`
+   4. Copy the contents of `supabase/functions/send-otp-email/index.ts`
+   5. Paste into the function editor
+   6. Set environment variables:
+      - `RESEND_API_KEY` - Your Resend API key
+      - `RESEND_FROM_EMAIL` - Email address to send from (e.g., `noreply@iam.gov.mz`)
+   7. Deploy the function
+
+   **Option B: Using Supabase CLI**
+
+   Install Supabase CLI using one of these methods:
+
+   **Windows (Scoop):**
+
+   ```bash
+   scoop bucket add supabase https://github.com/supabase/scoop-bucket.git
+   scoop install supabase
+   ```
+
+   **Windows (Chocolatey):**
+
+   ```bash
+   choco install supabase
+   ```
+
+   **Windows (Manual):**
+   - Download from [GitHub Releases](https://github.com/supabase/cli/releases)
+   - Extract and add to PATH
+
+   **After installation:**
+
+   ```bash
+   # Login to Supabase
+   supabase login
+
+   # Link your project
+   supabase link --project-ref your-project-ref
+
+   # Deploy the function
+   supabase functions deploy send-otp-email
+
+   # Set environment variables
+   supabase secrets set RESEND_API_KEY=your-api-key
+   supabase secrets set RESEND_FROM_EMAIL=noreply@iam.gov.mz
+   ```
+
+   **Note:** The Supabase Dashboard method (Option A) is recommended as it doesn't require CLI installation.
 
 ### Resend Integration
 
@@ -417,19 +471,33 @@ Ensure these are configured:
 ### Common Issues
 
 1. **OTP not received**
-   - Check Resend API key configuration
-   - Verify Edge Function is deployed
+   - Check Resend API key configuration in Edge Function
+   - Verify Edge Function is deployed and active
    - Check CORS settings in Edge Function
+   - Verify `RESEND_FROM_EMAIL` is set correctly
+   - Check Edge Function logs in Supabase dashboard
 
 2. **Upload fails**
-   - Ensure Excel has correct column names
-   - Check for duplicate emails
+   - Ensure Excel has correct column names (Nome/Name, Email)
+   - Check for duplicate emails in database
    - Verify database connection
+   - Check browser console for errors
 
 3. **Login redirects incorrectly**
-   - Check localStorage for user ID
+   - Check localStorage for user ID (`secret_santa_participant`)
    - Verify participant exists in database
-   - Check amount value (default redirects to enter-amount)
+   - Check amount value (default "1000" redirects to enter-amount)
+
+4. **Supabase CLI not found**
+   - Install via npm: `npm install -g supabase`
+   - Or use Supabase Dashboard to deploy functions (no CLI needed)
+   - Alternative: Use Supabase web interface for all operations
+
+5. **Edge Function deployment issues**
+   - Ensure function code is valid TypeScript/Deno
+   - Check environment variables are set
+   - Verify function is active in dashboard
+   - Test function directly from Supabase dashboard
 
 ## 📄 License
 
