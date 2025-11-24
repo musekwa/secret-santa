@@ -47,9 +47,7 @@ export const Route = createFileRoute("/_auth/enter-amount")({
     if (!userId) {
       throw redirect({
         to: "/login",
-        search: {
-          redirect: location.href,
-        },
+        replace: true,
       });
     }
   },

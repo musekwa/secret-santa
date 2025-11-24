@@ -22,7 +22,6 @@ import { useForm } from "@tanstack/react-form";
 import {
   SubmitButton,
   FieldErrorMessage,
-  FieldDescription,
 } from "@/components/custom-ui/form-elements";
 import { Input } from "@/components/ui/input";
 import iamLogo from "@/assets/images/iam-logo.png";
@@ -52,7 +51,7 @@ export const Route = createFileRoute("/_auth/login")({
       const stored = localStorage.getItem("secret_santa_participant");
       if (stored) {
         throw redirect({
-          to: search.redirect || "/dashboard",
+          to: "/dashboard",
           replace: true,
         });
       }
