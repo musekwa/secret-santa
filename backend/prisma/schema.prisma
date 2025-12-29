@@ -1,0 +1,64 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id          String   @id @default(uuid())
+  name        String
+  email       String   @unique
+  password    String
+  is_verified Boolean  @default(false)
+  refresh_token String?
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  @@index([email])
+}
+
+model Group {
+  id           String        @id @default(uuid())
+  name         String
+  owner_id     String
+  created_at   DateTime      @default(now())
+  updated_at   DateTime      @updatedAt
+  participants Participant[]
+
+  @@index([name, owner_id])
+  @@unique([name, owner_id])
+}
+
+model Participant {
+  id         String  @id @default(uuid())
+  user_id    String
+  gift_value Float
+  role       Role    @default(USER)
+  status     Status  @default(PENDING)
+  code       String  @unique
+  group      Group?  @relation(fields: [group_id], references: [id])
+  group_id    String?
+
+  @@index([user_id, group_id])
+  @@unique([user_id, group_id])
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
+enum Status {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
