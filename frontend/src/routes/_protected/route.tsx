@@ -1,20 +1,15 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { AuthenticatedLayout } from "@/components/layouts/authenticated-layout";
-import { Spinner } from "@/components/ui/spinner";
-import { AlertCircleIcon } from "lucide-react";
+import CustomLoader from "@/components/custom-ui/custom-loader";
+import CustomError from "@/components/custom-ui/custom-error";
+import { requireAuth } from "@/lib/utils/auth.utils";
 
 export const Route = createFileRoute("/_protected")({
   beforeLoad: async () => {
-    // Check if user ID exists in localStorage
-    const userId = localStorage.getItem("secret_santa_participant");
-    if (!userId) {
-      throw redirect({
-        to: "/login",
-        replace: true,
-      });
-    }
+    const user = await requireAuth("/login");
+    return { user };
   },
-  pendingComponent: Spinner,
-  errorComponent: AlertCircleIcon,
+  pendingComponent: CustomLoader,
+  errorComponent: () => <CustomError resourceName="a página" />,
   component: () => <AuthenticatedLayout />,
 });

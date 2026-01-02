@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase/client";
+// import { supabase } from "@/lib/supabase/client";
 import {
   Table,
   TableBody,
@@ -62,62 +62,62 @@ function ParticipantsComponent() {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchParticipants = async () => {
-    try {
-      setLoading(true);
+    // try {
+    //   setLoading(true);
 
-      // Fetch all participants
-      const { data: participantsData, error: participantsError } =
-        await supabase
-          .from("participants")
-          .select("*")
-          .order("name", { ascending: true });
+    //   // Fetch all participants
+    //   const { data: participantsData, error: participantsError } =
+    //     await supabase
+    //       .from("participants")
+    //       .select("*")
+    //       .order("name", { ascending: true });
 
-      if (participantsError) {
-        console.error("Error fetching participants:", participantsError);
-        toast.error("Erro ao carregar participantes");
-        return;
-      }
+    //   if (participantsError) {
+    //     console.error("Error fetching participants:", participantsError);
+    //     toast.error("Erro ao carregar participantes");
+    //     return;
+    //   }
 
-      // Fetch all hidden friendships
-      const { data: friendshipsData, error: friendshipsError } = await supabase
-        .from("hidden_friendships")
-        .select("*");
+    //   // Fetch all hidden friendships
+    //   const { data: friendshipsData, error: friendshipsError } = await supabase
+    //     .from("hidden_friendships")
+    //     .select("*");
 
-      if (friendshipsError) {
-        console.error("Error fetching friendships:", friendshipsError);
-        toast.error("Erro ao carregar relacionamentos");
-        return;
-      }
+    //   if (friendshipsError) {
+    //     console.error("Error fetching friendships:", friendshipsError);
+    //     toast.error("Erro ao carregar relacionamentos");
+    //     return;
+    //   }
 
-      // Map participants with their chosen friends
-      const friendships = (friendshipsData as HiddenFriendship[]) || [];
-      const participantsMap = new Map(
-        (participantsData as Participant[]).map((p) => [p.id, p])
-      );
+    //   // Map participants with their chosen friends
+    //   const friendships = (friendshipsData as HiddenFriendship[]) || [];
+    //   const participantsMap = new Map(
+    //     (participantsData as Participant[]).map((p) => [p.id, p])
+    //   );
 
-      const participantsWithFriends: ParticipantWithFriend[] = (
-        participantsData as Participant[]
-      ).map((participant) => {
-        const friendship = friendships.find(
-          (f) => f.participant_id === participant.id
-        );
-        const friend = friendship
-          ? participantsMap.get(friendship.friend_id)
-          : null;
+    //   const participantsWithFriends: ParticipantWithFriend[] = (
+    //     participantsData as Participant[]
+    //   ).map((participant) => {
+    //     const friendship = friendships.find(
+    //       (f) => f.participant_id === participant.id
+    //     );
+    //     const friend = friendship
+    //       ? participantsMap.get(friendship.friend_id)
+    //       : null;
 
-        return {
-          ...participant,
-          friendName: friend ? friend.name : null,
-        };
-      });
+    //     return {
+    //       ...participant,
+    //       friendName: friend ? friend.name : null,
+    //     };
+    //   });
 
-      setParticipants(participantsWithFriends);
-    } catch (error) {
-      console.error("Error fetching data:", error);
-      toast.error("Erro ao carregar dados");
-    } finally {
-      setLoading(false);
-    }
+    //   setParticipants(participantsWithFriends);
+    // } catch (error) {
+    //   console.error("Error fetching data:", error);
+    //   toast.error("Erro ao carregar dados");
+    // } finally {
+    //   setLoading(false);
+    // }
   };
 
   useEffect(() => {
@@ -130,32 +130,32 @@ function ParticipantsComponent() {
   };
 
   const handleDeleteConfirm = async () => {
-    if (!participantToDelete) return;
+    // if (!participantToDelete) return;
 
-    setIsDeleting(true);
-    try {
-      // Delete participant (cascade will handle verifications and hidden_friendships)
-      const { error } = await supabase
-        .from("participants")
-        .delete()
-        .eq("id", participantToDelete.id);
+    // setIsDeleting(true);
+    // try {
+    //   // Delete participant (cascade will handle verifications and hidden_friendships)
+    //   const { error } = await supabase
+    //     .from("participants")
+    //     .delete()
+    //     .eq("id", participantToDelete.id);
 
-      if (error) {
-        console.error("Error deleting participant:", error);
-        toast.error("Erro ao remover participante. Tente novamente.");
-        return;
-      }
+    //   if (error) {
+    //     console.error("Error deleting participant:", error);
+    //     toast.error("Erro ao remover participante. Tente novamente.");
+    //     return;
+    //   }
 
-      toast.success("Participante removido com sucesso!");
-      setDeleteDialogOpen(false);
-      setParticipantToDelete(null);
-      await fetchParticipants();
-    } catch (error) {
-      console.error("Error deleting participant:", error);
-      toast.error("Erro ao remover participante. Tente novamente.");
-    } finally {
-      setIsDeleting(false);
-    }
+    //   toast.success("Participante removido com sucesso!");
+    //   setDeleteDialogOpen(false);
+    //   setParticipantToDelete(null);
+    //   await fetchParticipants();
+    // } catch (error) {
+    //   console.error("Error deleting participant:", error);
+    //   toast.error("Erro ao remover participante. Tente novamente.");
+    // } finally {
+    //   setIsDeleting(false);
+    // }
   };
 
   const formatAmount = (amount: string): string => {

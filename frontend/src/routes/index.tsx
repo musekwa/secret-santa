@@ -1,17 +1,13 @@
-import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
+import Home from "@/features/public/home";
+import CustomLoader from "@/components/custom-ui/custom-loader";
+import CustomError from "@/components/custom-ui/custom-error";
 
 export const Route = createFileRoute("/")({
   beforeLoad: async () => {
-    // Check if user ID exists in localStorage
-    const userId = localStorage.getItem("secret_santa_participant");
-    if (!userId) {
-      throw redirect({ to: "/login", replace: true });
-    }
-    throw redirect({
-      to: "/dashboard",
-    });
+  
   },
-  pendingComponent: () => <div>Loading...</div>,
-  errorComponent: () => <div>Error</div>,
-  component: () => <Outlet />,
+  pendingComponent: ()=><CustomLoader />,
+  errorComponent: () => <CustomError resourceName="a página" />,
+  component: () => <Home key="home" />,
 });

@@ -9,17 +9,23 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as PublicRouteRouteImport } from './routes/_public/route'
 import { Route as ProtectedRouteRouteImport } from './routes/_protected/route'
 import { Route as AuthRouteRouteImport } from './routes/_auth/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProtectedDashboardRouteImport } from './routes/_protected/dashboard'
 import { Route as AuthRequestOtpRouteImport } from './routes/_auth/request-otp'
+import { Route as AuthRegisterRouteImport } from './routes/_auth/register'
 import { Route as AuthLoginRouteImport } from './routes/_auth/login'
 import { Route as AuthEnterAmountRouteImport } from './routes/_auth/enter-amount'
 import { Route as ProtectedAdminRouteRouteImport } from './routes/_protected/admin/route'
-import { Route as ProtectedAdminUploadParticipantsRouteImport } from './routes/_protected/admin/upload-participants'
+import { Route as ProtectedGroupsIdRouteImport } from './routes/_protected/groups/$id'
 import { Route as ProtectedAdminParticipantsRouteImport } from './routes/_protected/admin/participants'
 
+const PublicRouteRoute = PublicRouteRouteImport.update({
+  id: '/_public',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProtectedRouteRoute = ProtectedRouteRouteImport.update({
   id: '/_protected',
   getParentRoute: () => rootRouteImport,
@@ -43,6 +49,11 @@ const AuthRequestOtpRoute = AuthRequestOtpRouteImport.update({
   path: '/request-otp',
   getParentRoute: () => AuthRouteRoute,
 } as any)
+const AuthRegisterRoute = AuthRegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
+  getParentRoute: () => AuthRouteRoute,
+} as any)
 const AuthLoginRoute = AuthLoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -58,12 +69,11 @@ const ProtectedAdminRouteRoute = ProtectedAdminRouteRouteImport.update({
   path: '/admin',
   getParentRoute: () => ProtectedRouteRoute,
 } as any)
-const ProtectedAdminUploadParticipantsRoute =
-  ProtectedAdminUploadParticipantsRouteImport.update({
-    id: '/upload-participants',
-    path: '/upload-participants',
-    getParentRoute: () => ProtectedAdminRouteRoute,
-  } as any)
+const ProtectedGroupsIdRoute = ProtectedGroupsIdRouteImport.update({
+  id: '/groups/$id',
+  path: '/groups/$id',
+  getParentRoute: () => ProtectedRouteRoute,
+} as any)
 const ProtectedAdminParticipantsRoute =
   ProtectedAdminParticipantsRouteImport.update({
     id: '/participants',
@@ -76,33 +86,37 @@ export interface FileRoutesByFullPath {
   '/admin': typeof ProtectedAdminRouteRouteWithChildren
   '/enter-amount': typeof AuthEnterAmountRoute
   '/login': typeof AuthLoginRoute
+  '/register': typeof AuthRegisterRoute
   '/request-otp': typeof AuthRequestOtpRoute
   '/dashboard': typeof ProtectedDashboardRoute
   '/admin/participants': typeof ProtectedAdminParticipantsRoute
-  '/admin/upload-participants': typeof ProtectedAdminUploadParticipantsRoute
+  '/groups/$id': typeof ProtectedGroupsIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof ProtectedAdminRouteRouteWithChildren
   '/enter-amount': typeof AuthEnterAmountRoute
   '/login': typeof AuthLoginRoute
+  '/register': typeof AuthRegisterRoute
   '/request-otp': typeof AuthRequestOtpRoute
   '/dashboard': typeof ProtectedDashboardRoute
   '/admin/participants': typeof ProtectedAdminParticipantsRoute
-  '/admin/upload-participants': typeof ProtectedAdminUploadParticipantsRoute
+  '/groups/$id': typeof ProtectedGroupsIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_auth': typeof AuthRouteRouteWithChildren
   '/_protected': typeof ProtectedRouteRouteWithChildren
+  '/_public': typeof PublicRouteRoute
   '/_protected/admin': typeof ProtectedAdminRouteRouteWithChildren
   '/_auth/enter-amount': typeof AuthEnterAmountRoute
   '/_auth/login': typeof AuthLoginRoute
+  '/_auth/register': typeof AuthRegisterRoute
   '/_auth/request-otp': typeof AuthRequestOtpRoute
   '/_protected/dashboard': typeof ProtectedDashboardRoute
   '/_protected/admin/participants': typeof ProtectedAdminParticipantsRoute
-  '/_protected/admin/upload-participants': typeof ProtectedAdminUploadParticipantsRoute
+  '/_protected/groups/$id': typeof ProtectedGroupsIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -111,42 +125,54 @@ export interface FileRouteTypes {
     | '/admin'
     | '/enter-amount'
     | '/login'
+    | '/register'
     | '/request-otp'
     | '/dashboard'
     | '/admin/participants'
-    | '/admin/upload-participants'
+    | '/groups/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/admin'
     | '/enter-amount'
     | '/login'
+    | '/register'
     | '/request-otp'
     | '/dashboard'
     | '/admin/participants'
-    | '/admin/upload-participants'
+    | '/groups/$id'
   id:
     | '__root__'
     | '/'
     | '/_auth'
     | '/_protected'
+    | '/_public'
     | '/_protected/admin'
     | '/_auth/enter-amount'
     | '/_auth/login'
+    | '/_auth/register'
     | '/_auth/request-otp'
     | '/_protected/dashboard'
     | '/_protected/admin/participants'
-    | '/_protected/admin/upload-participants'
+    | '/_protected/groups/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRouteRoute: typeof AuthRouteRouteWithChildren
   ProtectedRouteRoute: typeof ProtectedRouteRouteWithChildren
+  PublicRouteRoute: typeof PublicRouteRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/_public': {
+      id: '/_public'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof PublicRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_protected': {
       id: '/_protected'
       path: ''
@@ -182,6 +208,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRequestOtpRouteImport
       parentRoute: typeof AuthRouteRoute
     }
+    '/_auth/register': {
+      id: '/_auth/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof AuthRegisterRouteImport
+      parentRoute: typeof AuthRouteRoute
+    }
     '/_auth/login': {
       id: '/_auth/login'
       path: '/login'
@@ -203,12 +236,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedAdminRouteRouteImport
       parentRoute: typeof ProtectedRouteRoute
     }
-    '/_protected/admin/upload-participants': {
-      id: '/_protected/admin/upload-participants'
-      path: '/upload-participants'
-      fullPath: '/admin/upload-participants'
-      preLoaderRoute: typeof ProtectedAdminUploadParticipantsRouteImport
-      parentRoute: typeof ProtectedAdminRouteRoute
+    '/_protected/groups/$id': {
+      id: '/_protected/groups/$id'
+      path: '/groups/$id'
+      fullPath: '/groups/$id'
+      preLoaderRoute: typeof ProtectedGroupsIdRouteImport
+      parentRoute: typeof ProtectedRouteRoute
     }
     '/_protected/admin/participants': {
       id: '/_protected/admin/participants'
@@ -223,12 +256,14 @@ declare module '@tanstack/react-router' {
 interface AuthRouteRouteChildren {
   AuthEnterAmountRoute: typeof AuthEnterAmountRoute
   AuthLoginRoute: typeof AuthLoginRoute
+  AuthRegisterRoute: typeof AuthRegisterRoute
   AuthRequestOtpRoute: typeof AuthRequestOtpRoute
 }
 
 const AuthRouteRouteChildren: AuthRouteRouteChildren = {
   AuthEnterAmountRoute: AuthEnterAmountRoute,
   AuthLoginRoute: AuthLoginRoute,
+  AuthRegisterRoute: AuthRegisterRoute,
   AuthRequestOtpRoute: AuthRequestOtpRoute,
 }
 
@@ -238,12 +273,10 @@ const AuthRouteRouteWithChildren = AuthRouteRoute._addFileChildren(
 
 interface ProtectedAdminRouteRouteChildren {
   ProtectedAdminParticipantsRoute: typeof ProtectedAdminParticipantsRoute
-  ProtectedAdminUploadParticipantsRoute: typeof ProtectedAdminUploadParticipantsRoute
 }
 
 const ProtectedAdminRouteRouteChildren: ProtectedAdminRouteRouteChildren = {
   ProtectedAdminParticipantsRoute: ProtectedAdminParticipantsRoute,
-  ProtectedAdminUploadParticipantsRoute: ProtectedAdminUploadParticipantsRoute,
 }
 
 const ProtectedAdminRouteRouteWithChildren =
@@ -252,11 +285,13 @@ const ProtectedAdminRouteRouteWithChildren =
 interface ProtectedRouteRouteChildren {
   ProtectedAdminRouteRoute: typeof ProtectedAdminRouteRouteWithChildren
   ProtectedDashboardRoute: typeof ProtectedDashboardRoute
+  ProtectedGroupsIdRoute: typeof ProtectedGroupsIdRoute
 }
 
 const ProtectedRouteRouteChildren: ProtectedRouteRouteChildren = {
   ProtectedAdminRouteRoute: ProtectedAdminRouteRouteWithChildren,
   ProtectedDashboardRoute: ProtectedDashboardRoute,
+  ProtectedGroupsIdRoute: ProtectedGroupsIdRoute,
 }
 
 const ProtectedRouteRouteWithChildren = ProtectedRouteRoute._addFileChildren(
@@ -267,6 +302,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRouteRoute: AuthRouteRouteWithChildren,
   ProtectedRouteRoute: ProtectedRouteRouteWithChildren,
+  PublicRouteRoute: PublicRouteRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

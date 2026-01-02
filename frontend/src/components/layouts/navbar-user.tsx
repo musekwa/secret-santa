@@ -1,4 +1,4 @@
-import { ChevronsUpDown, LogOut } from "lucide-react";
+import { ChevronsUpDown, LogOut, Plus } from "lucide-react";
 import useDialogState from "@/hooks/use-dialog-state";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { SignOutDialog } from "@/components/custom-ui/sign-out-dialog";
+import { AddGroupDialog } from "@/features/groups/add-group-dialog";
 import type { User } from "@/types/auth.types";
 
 type NavbarUserProps = {
@@ -20,7 +21,7 @@ type NavbarUserProps = {
 
 export const NavbarUser = ({ user }: NavbarUserProps) => {
   const [open, setOpen] = useDialogState();
-
+  const [openAddGroup, setOpenAddGroup] = useDialogState();
   // Generate initials from name
   const getInitials = (name: string) => {
     return name
@@ -79,6 +80,11 @@ export const NavbarUser = ({ user }: NavbarUserProps) => {
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
+            <DropdownMenuItem onClick={() => setOpenAddGroup(true)}>
+              <Plus />
+              Adicionar Grupo
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
             <DropdownMenuItem
               variant="destructive"
               onClick={() => setOpen(true)}
@@ -91,6 +97,11 @@ export const NavbarUser = ({ user }: NavbarUserProps) => {
       </DropdownMenu>
 
       <SignOutDialog open={!!open} onOpenChange={setOpen} />
+      <AddGroupDialog
+        open={!!openAddGroup}
+        onOpenChange={setOpenAddGroup}
+        userId={user.id}
+      />
     </>
   );
 };
