@@ -1,12 +1,14 @@
 import UserControllers from "@/controllers/user.controllers.js";
 import validate from "@/middlewares/validate.js";
-import { userCreation, resourceId } from "@/validators/index.js";
+import { userCreation, paramsValidation } from "@/validators/index.js";
 import express from "express";
+import refreshJWTToken from "@/middlewares/refresh-token.js";
 
 const router = express.Router();
 
-router.get("/users", UserControllers.getAllUsers);
-router.get("/users/:id", validate(resourceId), UserControllers.getUserById);
-router.put("/users/:id", validate(resourceId), validate(userCreation), UserControllers.updateUser);
+router.get("/", refreshJWTToken, UserControllers.findMany);
+router.get("/:id", refreshJWTToken, validate(paramsValidation), UserControllers.findById);
+router.put("/:id", refreshJWTToken, validate(paramsValidation), validate(userCreation), UserControllers.update);
+// router.get("/me", refreshJWTToken, UserControllers.findMe);
 
 export default router;

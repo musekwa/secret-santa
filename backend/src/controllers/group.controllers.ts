@@ -5,7 +5,7 @@ import { Request, Response } from "express";
 export default class GroupControllers {
 
     // create a group
-static createGroup = async (req: Request, res: Response) => {
+static create = async (req: Request, res: Response) => {
 
     try {
         const { name, owner_id } = req.body
@@ -31,7 +31,7 @@ static createGroup = async (req: Request, res: Response) => {
 }
 
 // get all groups
-static getAllGoups = async (req: Request, res: Response) => {
+static findMany = async (req: Request, res: Response) => {
     try {
       const { success, data, message } = await GroupServices.findMany();
       if (!success) {
@@ -54,7 +54,7 @@ static getAllGoups = async (req: Request, res: Response) => {
   };
 
 // get a group by id
-static getGroupById = async (req: Request, res: Response) => {
+static findById = async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       if (!id) {

@@ -4,9 +4,17 @@ import Joi from "joi";
 const uuid = Joi.string().uuid();
 
 // id validation
-const resourceId = {
+const paramsValidation = {
   params: Joi.object().keys({
     id: uuid.required(),
+  }),
+};
+
+// query validation
+const queryValidation = {
+  query: Joi.object().keys({
+    group_id: uuid.optional(),
+    user_id: uuid.optional(),
   }),
 };
 
@@ -45,13 +53,11 @@ const groupCreation = {
 const participantCreation = {
   body: Joi.object()
     .keys({
-      user_id: uuid.required(),
+      email: Joi.string().email().required(),
+      name: Joi.string().required(),
       group_id: uuid.required(),
-      gift_value: Joi.number().required(),
-      role: Joi.string().valid("ADMIN", "USER").optional(),
-      status: Joi.string().valid("PENDING", "ACCEPTED", "REJECTED").optional(),
     })
-    .min(3),
+    .min(2),
 };
 
 // validate auth config
@@ -69,7 +75,8 @@ const validateAuthConfig = {
 
 export {
   uuid,
-  resourceId,
+  paramsValidation,
+  queryValidation,
   userCreation,
   groupCreation,
   participantCreation,

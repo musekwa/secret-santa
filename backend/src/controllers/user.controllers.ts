@@ -1,10 +1,13 @@
 import { Request, Response } from "express";
 import { hashPassword } from "@/utils/hashes.js";
 import UserServices from "@/services/user.services.js";
+import authConfig from "@/config/auth.config.js";
+import jwt from "jsonwebtoken";
 
 export default class UserControllers {
+
 // get all users
-static getAllUsers = async (req: Request, res: Response) => {
+static findMany = async (req: Request, res: Response) => {
     try {
       const { success, data, message } = await UserServices.findMany();
       if (!success) {
@@ -27,7 +30,7 @@ static getAllUsers = async (req: Request, res: Response) => {
   };
 
   // get a user by id
-static getUserById = async (req: Request, res: Response) => {
+static findById = async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       if (!id) {
@@ -58,7 +61,7 @@ static getUserById = async (req: Request, res: Response) => {
 
   
 // update user
-static updateUser = async (req: Request, res: Response) => {
+static update = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { name, password, is_verified } = req.body;

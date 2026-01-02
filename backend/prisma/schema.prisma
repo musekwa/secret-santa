@@ -30,11 +30,12 @@ model Group {
   id           String        @id @default(uuid())
   name         String
   owner_id     String
-  created_at   DateTime      @default(now())
-  updated_at   DateTime      @updatedAt
+  is_active    Boolean       @default(true)
+  created_at   DateTime       @default(now())
+  updated_at   DateTime       @updatedAt
   participants Participant[]
 
-  @@index([name, owner_id])
+  @@index([name, owner_id, is_active])
   @@unique([name, owner_id])
 }
 
